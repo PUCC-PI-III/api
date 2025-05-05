@@ -1,0 +1,29 @@
+export default async function (fastify) {
+fastify.post('/user', (req) => {
+    const db = fastify.mongo.client.db('projetoI');
+    const users = db.collection('users');
+    try {
+      const { email, senha } = req.body;
+      const funcao = true;
+  
+      const newUser = users.insertOne({ "email": email, "senha": senha, "funcao": funcao });
+      return newUser;
+    } catch (err) {
+      return { error: err.message };
+    }
+  })
+
+fastify.get('/users', async function (req, reply) {
+    const db = this.mongo.client.db('projetoI'); 
+    const users = db.collection('users');
+    try {
+      const allUsers = users.find({}).toArray();
+      return allUsers;
+    } catch (err) {
+      return { error: err.message };
+    }
+  })
+  
+  
+
+}

@@ -1,0 +1,19 @@
+meta {
+  name: getImage
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://127.0.0.1:3000/riscos/imagem
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: image/png
+}
+
+body:json {
+  {"id": "6818e0b577aba7eef3da8ba5"}
+}

@@ -1,0 +1,22 @@
+meta {
+  name: newRisk
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://127.0.0.1:3000/riscos
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Content-Type: multipart/form-data
+}
+
+body:multipart-form {
+  titulo: casa
+  obs: foi em casa
+  localizacao: casa
+  imagem: @file(C:\Users\User\Downloads\coincidencia.jpg)
+}
