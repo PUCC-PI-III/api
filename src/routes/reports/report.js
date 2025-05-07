@@ -36,7 +36,7 @@ export default async function (fastify) {
             const risk = await riscos.findOne({ _id: new fastify.mongo.ObjectId(id) });
 
             if (!risk) {
-                reply.code(404).send({ error: 'Risk not found' });
+                reply.code(404).send({ error: 'Risco não encontrado.' });
                 return;
             }
 
@@ -52,6 +52,17 @@ export default async function (fastify) {
             reply.code(500).send({ error: err.message });
         }
     });
+
+    fastify.get('/riscos', async function (req, reply) {
+      const db = this.mongo.client.db('projetoI'); 
+      const riscos = db.collection('riscos');
+      try {
+        const allRiscos = riscos.find({}).toArray();
+        return allRiscos;
+      } catch (err) {
+        return { error: err.message };
+      }
+    })
 }
 
 
