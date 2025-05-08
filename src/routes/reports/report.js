@@ -1,4 +1,3 @@
-
 import fastifyMultipart from '@fastify/multipart';
 
 export default async function (fastify) {

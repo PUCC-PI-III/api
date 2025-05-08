@@ -6,7 +6,7 @@ fastify.post('/user', (req) => {
       const { email, senha } = req.body;
       const funcao = true;
   
-      const newUser = users.insertOne({ "email": email, "senha": senha, "funcao": funcao });
+      const newUser = users.insertOne({ "email": email,"nome": nome, "senha": senha, "funcao": funcao });
       return newUser;
     } catch (err) {
       return { error: err.message };
