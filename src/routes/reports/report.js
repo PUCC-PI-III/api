@@ -41,12 +41,13 @@ export default async function (fastify) {
 
             const buffoon = Buffer.from(risk.imagem, 'base64');
 
-            reply.header('Content-Type', 'application/json').send({
+            /*reply.header('Content-Type', 'application/json').send({
                 titulo: risk.tit,
                 obs: risk.obs,
                 localizacao: risk.localizacao,
-                imagem: buffoon.toString('base64') // Send the image as a base64 string
-            });
+                imagem: buffoon.toString('base64') 
+            });*/
+            reply.header('Content-Type', 'image/png').send(buffoon); 
         } catch (err) {
             reply.code(500).send({ error: err.message });
         }

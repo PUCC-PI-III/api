@@ -22,7 +22,7 @@ fastify.get('/', function (_,reply) {
   reply.send("bogos binted👽");
 })
   
-  fastify.listen({ port: 3000 }, err => {
+  fastify.listen({ port: 8080, host: '0.0.0.0' }, err => {
     if (err) throw err
   })
 
