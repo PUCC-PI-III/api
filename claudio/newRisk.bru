@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: http://127.0.0.1:3000/riscos
+  url: http://127.0.0.1:8080/riscos
   body: multipartForm
   auth: none
 }
@@ -15,8 +15,8 @@ headers {
 }
 
 body:multipart-form {
-  titulo: casa
-  obs: foi em casa
-  localizacao: casa
-  imagem: @file(C:\Users\User\Downloads\coincidencia.jpg)
+  titulo: analise
+  obs: sera q vem em string ou date
+  localizacao: testando
+  imagem: @file(C:\Users\User\Downloads\perkeo.png)
 }

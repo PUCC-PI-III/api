@@ -1,29 +1,62 @@
 import fastifyMultipart from '@fastify/multipart';
 
+function getMonday() {
+  let mondayWeek = new Date(Date.now());
+  let monday = mondayWeek.getDay() || 7;
+  if (monday !== 1) {
+    mondayWeek.setHours(-24 * (monday - 1));
+  }
+  let year = mondayWeek.getFullYear();
+  let month = String(mondayWeek.getMonth() + 1).padStart(2, "0");
+  let dayW = String(mondayWeek.getDate()).padStart(2,"0");
+  var formattedMonday = `${year}-${month}-${dayW} 00:00:00`;
+
+  return formattedMonday;
+} //amamos código reaproveitado
+function getSunday() {
+  let sundayWeek = new Date(Date.now());
+  let sunday = sundayWeek.getDay();
+  if (sunday != 0) {
+    sundayWeek.setHours(-24 * (sunday - 7));
+  }
+  let year = sundayWeek.getFullYear();
+  let month = String(sundayWeek.getMonth() + 1).padStart(2, "0");
+  let dayW = String(sundayWeek.getDate()).padStart(2,"0");
+  var formattedSunday = `${year}-${month}-${dayW} 23:59:59`;
+  // Return as a Date object
+  return formattedSunday;
+}
+
 export default async function (fastify) {
     fastify.register(fastifyMultipart); 
     //cria a rota tipo POST de riscos, responsável pelo cadastro de riscos
     fastify.post('/riscos', async (req, reply) => {
-        const db = fastify.mongo.client.db('projetoI'); //determina o database
-        const riscos = db.collection('riscos'); //determina a collection
+      const db = fastify.mongo.client.db('projetoI'); //determina o database
+      const riscos = db.collection('riscos'); //determina a collection
+     
+      try {
+        const data = await req.file(); //determina que 'data' equivale ao valor recebido na chamada de req.file, método da lib 'multer' para receber arquivos
+        const tit = data.fields.titulo.value; //titulo(propriedade de 'riscos')
+        const obs = data.fields.obs.value; //observações(propriedade de 'riscos')
+        const date = new Date(); // cria um objeto Date do JS
+        
+        const localizacao = data.fields.localizacao.value; //localização(propriedade de 'riscos')
 
-        try {
-            const data = await req.file(); //determina que 'data' equivale ao valor recebido na chamada de req.file, método da lib 'multer' para receber arquivos
-            const tit = data.fields.titulo.value; //titulo(propriedade de 'riscos')
-            const obs = data.fields.obs.value; //observações(propriedade de 'riscos')
-            const localizacao = data.fields.localizacao.value; //localização(propriedade de 'riscos')
+        const buffoon = await data.toBuffer(); //converte os dados para tipo binário através do método 'toBuffer' e armazena na constante 'buffoon'(balatro mencionado)
+        const b64 = buffoon.toString('base64'); //converte a constante em buffoon para base64
 
-            const buffoon = await data.toBuffer(); //converte os dados para tipo binário através do método 'toBuffer' e armazena na constante 'buffoon'(balatro mencionado)
- 
-            const b64 = buffoon.toString('base64'); //converte a constante em buffoon para base64
+        const newRisk = await riscos.insertOne({
+          tit,
+          obs,
+          localizacao,
+          date,
+          imagem: b64,
+        });
 
-            const newRisk = await riscos.insertOne({tit,obs,localizacao,imagem: b64,
-            }); //armazena o resultado da operacao de inserção no banco numa constante 'newRisk'
-
-            reply.code(201).send(newRisk); //retorna sucesso e envia o resultado da operacao
-        } catch (err) {
-            reply.code(500).send({ error: err.message }); //retorna erro
-        }
+        reply.code(201).send(newRisk); //retorna sucesso e envia o resultado da operacao
+      } catch (err) {
+        reply.code(500).send({ error: err.message }); //retorna erro
+      }
     });
 
     fastify.get('/riscos/:id', async (req, reply) => {
@@ -63,6 +96,25 @@ export default async function (fastify) {
         return { error: err.message };
       }
     })
+
+  fastify.get('/relatorio', async function (_, reply) {
+    const db = this.mongo.client.db('projetoI'); 
+    const riscos = db.collection('riscos');
+
+    try {
+      const monday = new Date(getMonday());
+      const sunday = new Date(getSunday());
+      const relatorio = await riscos.find(
+        { date: { $gte: monday, $lte: sunday } },
+        { projection: { tit: 1, obs: 1, localizacao: 1, date: 1 } } //filtra pra nao retornar imagem (ela ta em b64 ta bem feinha :3)
+      ).toArray();
+      reply.code(200).send(relatorio);
+    } catch (err) {
+      return { error: err.message };
+    }
+  })
+
+    
 }
 
 
