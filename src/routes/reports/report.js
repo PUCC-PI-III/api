@@ -1,8 +1,14 @@
 import fastifyMultipart from '@fastify/multipart';
 
-function getMonday() {
-  let mondayWeek = new Date(Date.now());
-  let monday = mondayWeek.getDay() || 7;
+function getMonday(dateInput) {
+  let mondayWeek;
+  if (dateInput) {
+    mondayWeek = new Date(dateInput);
+  } else {
+    mondayWeek = new Date(Date.now());
+  }
+  let monday = mondayWeek.getDay();
+  if (monday === 0) monday = 7;
   if (monday !== 1) {
     mondayWeek.setHours(-24 * (monday - 1));
   }
@@ -13,8 +19,13 @@ function getMonday() {
 
   return formattedMonday;
 } //amamos código reaproveitado
-function getSunday() {
-  let sundayWeek = new Date(Date.now());
+function getSunday(dateInput) {
+  let sundayWeek;
+  if (dateInput) {
+    sundayWeek = new Date(dateInput);
+  } else {
+    sundayWeek = new Date(Date.now());
+  }
   let sunday = sundayWeek.getDay();
   if (sunday != 0) {
     sundayWeek.setHours(-24 * (sunday - 7));
@@ -97,18 +108,40 @@ export default async function (fastify) {
       }
     })
 
-  fastify.get('/relatorio', async function (_, reply) {
+  fastify.post('/relatorio', async function (req, reply) {
     const db = this.mongo.client.db('projetoI'); 
     const riscos = db.collection('riscos');
-
+    const date = req.body.date;
     try {
-      const monday = new Date(getMonday());
-      const sunday = new Date(getSunday());
+      const monday = new Date(getMonday(date));
+      const sunday = new Date(getSunday(date));
       const relatorio = await riscos.find(
-        { date: { $gte: monday, $lte: sunday } },
+        { date: { $gte: monday, $lte: sunday } }, 
         { projection: { tit: 1, obs: 1, localizacao: 1, date: 1 } } //filtra pra nao retornar imagem (ela ta em b64 ta bem feinha :3)
       ).toArray();
       reply.code(200).send(relatorio);
+    } catch (err) {
+      return { error: err.message };
+    }
+  })
+
+  fastify.get('/relatoriosfodas', async function (_, reply) {
+    const db = this.mongo.client.db('projetoI'); 
+    const riscos = db.collection('riscos');
+    try {
+      const testando = await riscos.find(
+        {},
+        { projection: { tit: 1, obs: 1, localizacao: 1, date: 1 } }
+      ).toArray();
+
+
+      testando.forEach(item => {
+        var date = item.date;
+        var monday = new Date(getMonday(date));
+        var sunday = new Date(getSunday(date));
+      });
+
+      reply.code(200).send(testando);
     } catch (err) {
       return { error: err.message };
     }
