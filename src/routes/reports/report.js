@@ -49,9 +49,9 @@ export default async function (fastify) {
         const data = await req.file(); //determina que 'data' equivale ao valor recebido na chamada de req.file, método da lib 'multer' para receber arquivos
         const tit = data.fields.titulo.value; //titulo(propriedade de 'riscos')
         const obs = data.fields.obs.value; //observações(propriedade de 'riscos')
-        const date = new Date(); // cria um objeto Date do JS
-        
+        const date = new Date(); // cria um objeto Date do JS        
         const localizacao = data.fields.localizacao.value; //localização(propriedade de 'riscos')
+        var status = false; //se está resolvido ou não
 
         const buffoon = await data.toBuffer(); //converte os dados para tipo binário através do método 'toBuffer' e armazena na constante 'buffoon'(balatro mencionado)
         const b64 = buffoon.toString('base64'); //converte a constante em buffoon para base64
@@ -62,6 +62,7 @@ export default async function (fastify) {
           localizacao,
           date,
           imagem: b64,
+          status
         });
 
         reply.code(201).send(newRisk); //retorna sucesso e envia o resultado da operacao
@@ -117,21 +118,30 @@ export default async function (fastify) {
       const sunday = new Date(getSunday(date));
       const relatorio = await riscos.find(
         { date: { $gte: monday, $lte: sunday } }, 
-        { projection: { tit: 1, obs: 1, localizacao: 1, date: 1 } } //filtra pra nao retornar imagem (ela ta em b64 ta bem feinha :3)
+        { projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1, status: 1 } } //filtra pra nao retornar imagem (ela ta em b64 ta bem feinha :3)
       ).toArray();
       reply.code(200).send(relatorio);
     } catch (err) {
       return { error: err.message };
     }
   })
-
+  fastify.get('/open', async function (_, reply) {
+    const db = this.mongo.client.db('projetoI'); 
+    const riscos = db.collection('riscos');
+    try {
+      const abertos = await riscos.find({status: false}, {projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1 }}).toArray();
+      reply.code(200).send(abertos);
+    } catch (err) {
+      return { error: err.message };
+    }
+  })
   fastify.get('/relatoriosfodas', async function (_, reply) {
     const db = this.mongo.client.db('projetoI'); 
     const riscos = db.collection('riscos');
     try {
       const testando = await riscos.find(
         {},
-        { projection: { tit: 1, obs: 1, localizacao: 1, date: 1 } }
+        { projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1 } }
       ).toArray();
 
 
@@ -142,6 +152,19 @@ export default async function (fastify) {
       });
 
       reply.code(200).send(testando);
+    } catch (err) {
+      return { error: err.message };
+    }
+  })
+
+  fastify.patch('/atualiza', async function (req, reply) {
+    const db = this.mongo.client.db('projetoI'); 
+    const riscos = db.collection('riscos');
+    try {
+      const id = req.body._id;
+      const update = await riscos.update(
+        {}
+      )
     } catch (err) {
       return { error: err.message };
     }
