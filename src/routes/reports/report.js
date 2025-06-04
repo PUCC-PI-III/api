@@ -109,7 +109,7 @@ export default async function (fastify) {
       }
     })
 
-  fastify.post('/relatorio', async function (req, reply) {
+  fastify.post('/relatoriosemanal', async function (req, reply) { //retorna riscos registrados naquela semana
     const db = this.mongo.client.db('projetoI'); 
     const riscos = db.collection('riscos');
     const date = req.body.date;
@@ -125,7 +125,8 @@ export default async function (fastify) {
       return { error: err.message };
     }
   })
-  fastify.get('/open', async function (_, reply) {
+
+  fastify.get('/open', async function (_, reply) { //retorna riscos abertos(não resolvidos)
     const db = this.mongo.client.db('projetoI'); 
     const riscos = db.collection('riscos');
     try {
@@ -135,15 +136,16 @@ export default async function (fastify) {
       return { error: err.message };
     }
   })
-  fastify.get('/relatoriosfodas', async function (_, reply) {
+
+  fastify.get('/relatoriomensal', async function (_, reply) {
     const db = this.mongo.client.db('projetoI'); 
     const riscos = db.collection('riscos');
     try {
-      const testando = await riscos.find(
+      const allRiscos = await riscos.find(
         {},
         { projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1 } }
       ).toArray();
-
+      const firstItem = testando[0];
 
       testando.forEach(item => {
         var date = item.date;
@@ -161,12 +163,15 @@ export default async function (fastify) {
     const db = this.mongo.client.db('projetoI'); 
     const riscos = db.collection('riscos');
     try {
-      const id = req.body._id;
-      const update = await riscos.update(
-        {}
-      )
+      const idRisco = req.body._id;
+      const id = this.mongo.ObjectId(idRisco);
+      const update = await riscos.updateOne(
+        { _id: id},
+        { $set: { status: true } }
+      );
+      reply.code(200).send(update);
     } catch (err) {
-      return { error: err.message };
+      reply.code(500).send({ error: err.message });
     }
   })
 
