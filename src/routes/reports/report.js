@@ -1,4 +1,4 @@
-import fastifyMultipart from '@fastify/multipart';
+import fastifyMultipart from "@fastify/multipart";
 
 function getMonday(dateInput) {
   let mondayWeek;
@@ -14,7 +14,7 @@ function getMonday(dateInput) {
   }
   let year = mondayWeek.getFullYear();
   let month = String(mondayWeek.getMonth() + 1).padStart(2, "0");
-  let dayW = String(mondayWeek.getDate()).padStart(2,"0");
+  let dayW = String(mondayWeek.getDate()).padStart(2, "0");
   var formattedMonday = `${year}-${month}-${dayW} 00:00:00`;
 
   return formattedMonday;
@@ -32,180 +32,200 @@ function getSunday(dateInput) {
   }
   let year = sundayWeek.getFullYear();
   let month = String(sundayWeek.getMonth() + 1).padStart(2, "0");
-  let dayW = String(sundayWeek.getDate()).padStart(2,"0");
+  let dayW = String(sundayWeek.getDate()).padStart(2, "0");
   var formattedSunday = `${year}-${month}-${dayW} 23:59:59`;
   // Return as a Date object
   return formattedSunday;
 }
 
 export default async function (fastify) {
-    fastify.register(fastifyMultipart); 
-    //cria a rota tipo POST de riscos, responsável pelo cadastro de riscos
-    fastify.post('/riscos', async (req, reply) => {
-      const db = fastify.mongo.client.db('projetoI'); //determina o database
-      const riscos = db.collection('riscos'); //determina a collection
-     
-      try {
-        const data = await req.file(); //determina que 'data' equivale ao valor recebido na chamada de req.file, método da lib 'multer' para receber arquivos
-        const tit = data.fields.titulo.value; //titulo(propriedade de 'riscos')
-        const obs = data.fields.obs.value; //observações(propriedade de 'riscos')
-        const date = new Date(); // cria um objeto Date do JS        
-        const localizacao = data.fields.localizacao.value; //localização(propriedade de 'riscos')
-        var status = false; //se está resolvido ou não
+  fastify.register(fastifyMultipart);
+  //cria a rota tipo POST de riscos, responsável pelo cadastro de riscos
+  fastify.post("/riscos", async (req, reply) => {
+    const db = fastify.mongo.client.db("projetoI"); //determina o database
+    const riscos = db.collection("riscos"); //determina a collection
 
-        const buffoon = await data.toBuffer(); //converte os dados para tipo binário através do método 'toBuffer' e armazena na constante 'buffoon'(balatro mencionado)
-        const b64 = buffoon.toString('base64'); //converte a constante em buffoon para base64
+    try {
+      const data = await req.file(); //determina que 'data' equivale ao valor recebido na chamada de req.file, método da lib 'multer' para receber arquivos
+      const tit = data.fields.titulo.value; //titulo(propriedade de 'riscos')
+      const obs = data.fields.obs.value; //observações(propriedade de 'riscos')
+      const date = new Date(); // cria um objeto Date do JS
+      const localizacao = data.fields.localizacao.value; //localização(propriedade de 'riscos')
+      var status = false; //se está resolvido ou não
 
-        const newRisk = await riscos.insertOne({
-          tit,
-          obs,
-          localizacao,
-          date,
-          imagem: b64,
-          status
-        });
+      const buffoon = await data.toBuffer(); //converte os dados para tipo binário através do método 'toBuffer' e armazena na constante 'buffoon'(balatro mencionado)
+      const b64 = buffoon.toString("base64"); //converte a constante em buffoon para base64
 
-        reply.code(201).send(newRisk); //retorna sucesso e envia o resultado da operacao
-      } catch (err) {
-        reply.code(500).send({ error: err.message }); //retorna erro
+      const newRisk = await riscos.insertOne({
+        tit,
+        obs,
+        localizacao,
+        date,
+        imagem: b64,
+        status,
+      });
+
+      reply.code(201).send(newRisk); //retorna sucesso e envia o resultado da operacao
+    } catch (err) {
+      reply.code(500).send({ error: err.message }); //retorna erro
+    }
+  });
+
+  fastify.get("/riscos/:id", async (req, reply) => {
+    const db = fastify.mongo.client.db("projetoI");
+    const riscos = db.collection("riscos");
+
+    try {
+      const { id } = req.params;
+      const risk = await riscos.findOne({
+        _id: new fastify.mongo.ObjectId(id),
+      });
+
+      if (!risk) {
+        reply.code(404).send({ error: "Risco não encontrado." });
+        return;
       }
-    });
 
-    fastify.get('/riscos/:id', async (req, reply) => {
-        const db = fastify.mongo.client.db('projetoI');
-        const riscos = db.collection('riscos');
+      const buffoon = Buffer.from(risk.imagem, "base64");
 
-        try {
-            const { id } = req.params;
-            const risk = await riscos.findOne({ _id: new fastify.mongo.ObjectId(id) });
-
-            if (!risk) {
-                reply.code(404).send({ error: 'Risco não encontrado.' });
-                return;
-            }
-
-            const buffoon = Buffer.from(risk.imagem, 'base64');
-
-            /*reply.header('Content-Type', 'application/json').send({
+      /*reply.header('Content-Type', 'application/json').send({
                 titulo: risk.tit,
                 obs: risk.obs,
                 localizacao: risk.localizacao,
                 imagem: buffoon.toString('base64') 
             });*/
-            reply.header('Content-Type', 'image/png').send(buffoon); 
-        } catch (err) {
-            reply.code(500).send({ error: err.message });
-        }
-    });
+      reply.header("Content-Type", "image/png").send(buffoon);
+    } catch (err) {
+      reply.code(500).send({ error: err.message });
+    }
+  });
 
-    fastify.get('/riscos', async function (req, reply) {
-      const db = this.mongo.client.db('projetoI'); 
-      const riscos = db.collection('riscos');
-      try {
-        const allRiscos = riscos.find({}).toArray();
-        return allRiscos;
-      } catch (err) {
-        return { error: err.message };
-      }
-    })
+  fastify.get("/riscos", async function (req, reply) {
+    const db = this.mongo.client.db("projetoI");
+    const riscos = db.collection("riscos");
+    try {
+      const allRiscos = riscos.find({}).toArray();
+      return allRiscos;
+    } catch (err) {
+      return { error: err.message };
+    }
+  });
 
-  fastify.post('/relatoriosemanal', async function (req, reply) { //retorna riscos registrados naquela semana
-    const db = this.mongo.client.db('projetoI'); 
-    const riscos = db.collection('riscos');
+  fastify.post("/relatoriosemanal", async function (req, reply) {
+    //retorna riscos registrados naquela semana
+    const db = this.mongo.client.db("projetoI");
+    const riscos = db.collection("riscos");
     const date = req.body.date;
     try {
       const monday = new Date(getMonday(date));
       const sunday = new Date(getSunday(date));
-      const relatorio = await riscos.find(
-        { date: { $gte: monday, $lte: sunday } }, 
-        { projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1, status: 1 } } //filtra pra nao retornar imagem (ela ta em b64 ta bem feinha :3)
-      ).toArray();
+      const relatorio = await riscos
+        .find(
+          { date: { $gte: monday, $lte: sunday } },
+          {
+            projection: {
+              _id: 1,
+              tit: 1,
+              obs: 1,
+              localizacao: 1,
+              date: 1,
+              status: 1,
+            },
+          } //filtra pra nao retornar imagem (ela ta em b64 ta bem feinha :3)
+        )
+        .toArray();
       reply.code(200).send(relatorio);
     } catch (err) {
       return { error: err.message };
     }
-  })
+  });
 
-  fastify.get('/open', async function (_, reply) { //retorna riscos abertos(não resolvidos)
-    const db = this.mongo.client.db('projetoI'); 
-    const riscos = db.collection('riscos');
+  fastify.get("/open", async function (_, reply) {
+    //retorna riscos abertos(não resolvidos)
+    const db = this.mongo.client.db("projetoI");
+    const riscos = db.collection("riscos");
     try {
-      const abertos = await riscos.find({status: false}, {projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1 }}).toArray();
+      const abertos = await riscos
+        .find(
+          { status: false },
+          { projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1 } }
+        )
+        .toArray();
       reply.code(200).send(abertos);
     } catch (err) {
       return { error: err.message };
     }
-  })
-
-  fastify.get('/relatoriomensal', async function (_, reply) {
-    const db = this.mongo.client.db('projetoI'); 
-    const riscos = db.collection('riscos');
+  });
+  fastify.get("/relatoriomensal", async function (_, reply) {
+    const db = this.mongo.client.db("projetoI");
+    const riscos = db.collection("riscos");
     try {
-      const allRiscos = await riscos.find(
-        {},
-        { projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1 } }
-      ).toArray();
-      const firstItem = testando[0];
+      const now = new Date();
+      /*const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-      testando.forEach(item => {
-        var date = item.date;
-        var monday = new Date(getMonday(date));
-        var sunday = new Date(getSunday(date));
+      const allRiscos = await riscos
+        .find(
+          { date: { $gte: startOfMonth, $lte: endOfMonth } },
+          { projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1 } }
+        )
+        .toArray();
+
+
+        o código comentado serve para que os relatórios busquem apenas os riscos no mês(talvez fique talvez nao :3)
+*/
+      const allRiscos = await riscos
+        .find(
+          {},
+          { projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1 } }
+        )
+        .toArray();
+      const semanas = [];
+
+      allRiscos.forEach((item) => {
+        const monday = getMonday(item.date);
+        const sunday = getSunday(item.date);
+        const range = `${monday} - ${sunday}`;
+
+        let semana = semanas.find((ordena) => ordena.week === range);
+        if (!semana) {
+          semana = { week: range, riscos: [] };
+          semanas.push(semana);
+        }
+        semana.riscos.push(item);
       });
 
-      reply.code(200).send(testando);
+      semanas.sort((a, b) => {
+        const [comeco1] = a.week.split(" - ");
+        const [comeco2] = b.week.split(" - ");
+        return new Date(comeco1) - new Date(comeco2);
+      });
+
+      reply.code(200).send(semanas);
+      
     } catch (err) {
       return { error: err.message };
     }
-  })
+  });
 
-  fastify.patch('/atualiza', async function (req, reply) {
-    const db = this.mongo.client.db('projetoI'); 
-    const riscos = db.collection('riscos');
+  fastify.patch("/atualiza", async function (req, reply) {
+    const db = this.mongo.client.db("projetoI");
+    const riscos = db.collection("riscos");
     try {
       const idRisco = req.body._id;
-      const id = this.mongo.ObjectId(idRisco);
+      const id = new this.mongo.ObjectId(idRisco);
       const update = await riscos.updateOne(
-        { _id: id},
+        { _id: id },
         { $set: { status: true } }
       );
       reply.code(200).send(update);
     } catch (err) {
       reply.code(500).send({ error: err.message });
     }
-  })
-
-    
+  });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-           
-                                                  /*.....=##########*:...                               
+/*.....=##########*:...                               
                                               ...+++++***********++-..                              
                                             ..:==****++++++++++++**+=-...                           
                                            ...=#*++++++++++++++++++*#*.....                         
@@ -283,19 +303,6 @@ export default async function (fastify) {
                   ..:+*#######**=..                              ..=**+++++++*+:..                  
                    ....+######:..                                  ..:######+....                   
             */
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /*
 
