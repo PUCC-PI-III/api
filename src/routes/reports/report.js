@@ -104,18 +104,26 @@ export default async function (fastify) {
     const db = this.mongo.client.db("projetoI");
     const riscos = db.collection("riscos");
     try {
-      const allRiscos = riscos.find({}).toArray();
+      const allRiscos = riscos.find({},{
+            projection: {
+              _id: 1,
+              tit: 1,
+              obs: 1,
+              localizacao: 1,
+              date: 1,
+              status: 1,
+            }}).toArray();
       return allRiscos;
     } catch (err) {
       return { error: err.message };
     }
   });
 
-  fastify.post("/relatoriosemanal", async function (req, reply) {
+  fastify.get("/relatoriosemanal", async function (req, reply) {
     //retorna riscos registrados naquela semana
     const db = this.mongo.client.db("projetoI");
     const riscos = db.collection("riscos");
-    const date = req.body.date;
+    const date = new Date(Date.now());
     try {
       const monday = new Date(getMonday(date));
       const sunday = new Date(getSunday(date));
@@ -179,7 +187,7 @@ export default async function (fastify) {
           {},
           { projection: { _id: 1, tit: 1, obs: 1, localizacao: 1, date: 1 } }
         )
-        .toArray();
+        .toArray(); //busca todos os documentos e retorna o id, o titulo, observações, localização e data
       const semanas = [];
 
       allRiscos.forEach((item) => {
