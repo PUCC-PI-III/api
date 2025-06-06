@@ -1,21 +1,22 @@
 import fastifyMultipart from "@fastify/multipart";
+import fastify from "fastify";
 
-function getMonday(dateInput) {
+function getMonday(dateInput) { 
   let mondayWeek;
   if (dateInput) {
-    mondayWeek = new Date(dateInput);
+    mondayWeek = new Date(dateInput); //cria um objeto Date com a data recebida 
   } else {
-    mondayWeek = new Date(Date.now());
+    mondayWeek = new Date(Date.now()); //cria um objeto Date com a data atual
   }
-  let monday = mondayWeek.getDay();
-  if (monday === 0) monday = 7;
-  if (monday !== 1) {
-    mondayWeek.setHours(-24 * (monday - 1));
+  let monday = mondayWeek.getDay(); //determina o dia da semana(0-6) da data recebida
+  if (monday === 0) monday = 7; //se for domingo, define como 7 para facilitar o cálculo
+  if (monday !== 1) { //se não for segunda-feira
+    mondayWeek.setHours(-24 * (monday - 1)); //subtrai o número de horas correspondente aos dias até a segunda-feira
   }
-  let year = mondayWeek.getFullYear();
-  let month = String(mondayWeek.getMonth() + 1).padStart(2, "0");
-  let dayW = String(mondayWeek.getDate()).padStart(2, "0");
-  var formattedMonday = `${year}-${month}-${dayW} 00:00:00`;
+  let year = mondayWeek.getFullYear(); //pega o ano da data
+  let month = String(mondayWeek.getMonth() + 1).padStart(2, "0"); //determina o mês da data e formata para ter dois dígitos
+  let dayW = String(mondayWeek.getDate()).padStart(2, "0"); //determina o dia do mês da data e formata para ter dois dígitos
+  var formattedMonday = `${year}-${month}-${dayW} 00:00:00`; //define a data formatada como string no formato 'YYYY-MM-DD HH:MM:SS'
 
   return formattedMonday;
 } //amamos código reaproveitado
@@ -28,14 +29,13 @@ function getSunday(dateInput) {
   }
   let sunday = sundayWeek.getDay();
   if (sunday != 0) {
-    sundayWeek.setHours(-24 * (sunday - 7));
+    sundayWeek.setHours(-24 * (sunday - 7)); //se não for domingo, subtrai o número de horas correspondente aos dias até o domingo
   }
-  let year = sundayWeek.getFullYear();
-  let month = String(sundayWeek.getMonth() + 1).padStart(2, "0");
-  let dayW = String(sundayWeek.getDate()).padStart(2, "0");
-  var formattedSunday = `${year}-${month}-${dayW} 23:59:59`;
-  // Return as a Date object
-  return formattedSunday;
+  let year = sundayWeek.getFullYear(); //pega o ano da data
+  let month = String(sundayWeek.getMonth() + 1).padStart(2, "0"); //determina o mês da data e formata para ter dois dígitos
+  let dayW = String(sundayWeek.getDate()).padStart(2, "0"); //determina o dia do mês da data e formata para ter dois dígitos
+  var formattedSunday = `${year}-${month}-${dayW} 23:59:59`; //formata a data como string no formato 'YYYY-MM-DD HH:MM:SS'
+  return formattedSunday; //retorna a data formatada
 }
 
 export default async function (fastify) {
@@ -112,12 +112,32 @@ export default async function (fastify) {
               localizacao: 1,
               date: 1,
               status: 1,
+            
             }}).toArray();
       return allRiscos;
     } catch (err) {
       return { error: err.message };
     }
   });
+
+  
+
+
+
+
+
+//Rotas referentes ao segundo aplicativo
+
+
+
+
+
+
+
+
+
+
+
 
   fastify.get("/relatoriosemanal", async function (req, reply) {
     //retorna riscos registrados naquela semana
@@ -190,26 +210,27 @@ export default async function (fastify) {
         .toArray(); //busca todos os documentos e retorna o id, o titulo, observações, localização e data
       const semanas = [];
 
-      allRiscos.forEach((item) => {
-        const monday = getMonday(item.date);
-        const sunday = getSunday(item.date);
-        const range = `${monday} - ${sunday}`;
+      allRiscos.forEach((item) => { //para cada item
+        const monday = getMonday(item.date); //define a segunda da semana daquele dia
+        const sunday = getSunday(item.date); //define o domingo da semana daquele dia
+        const range = `${monday} - ${sunday}`; //determina que a semana vai da segunda até o domingo
 
-        let semana = semanas.find((ordena) => ordena.week === range);
+        let semana = semanas.find((ordena) => ordena.week === range); //procura se já existe uma semana com o mesmo intervalo de datas
         if (!semana) {
-          semana = { week: range, riscos: [] };
-          semanas.push(semana);
+          semana = { week: range, riscos: [] }; //determina que o array 'semana'(que vai ser retornado pela rota) 
+          // contém o elemento 'week'(que determina o 'range') e um array para armazenar os riscos
+          semanas.push(semana); //armazena a semana no array 'semanas'
         }
-        semana.riscos.push(item);
+        semana.riscos.push(item); //adiciona o risco do item no array de riscos daquela semana
       });
 
       semanas.sort((a, b) => {
         const [comeco1] = a.week.split(" - ");
         const [comeco2] = b.week.split(" - ");
         return new Date(comeco1) - new Date(comeco2);
-      });
+      }); //ordena as semanas pelo começo da semana e retorna o array de semanas ordenado
 
-      reply.code(200).send(semanas);
+      reply.code(200).send(semanas); //retorna o array de semanas ordenado
       
     } catch (err) {
       return { error: err.message };
@@ -220,18 +241,55 @@ export default async function (fastify) {
     const db = this.mongo.client.db("projetoI");
     const riscos = db.collection("riscos");
     try {
-      const idRisco = req.body._id;
-      const id = new this.mongo.ObjectId(idRisco);
+      const idRisco = req.body._id; //define idRisco como o '_id' do documento
+      const id = new this.mongo.ObjectId(idRisco); //cria uma variavel 'id' que recebe um ObjectId(classe do _id) com o valor de idRisco
       const update = await riscos.updateOne(
-        { _id: id },
-        { $set: { status: true } }
+        { _id: id }, //pega o id do documento
+        { $set: { status: true } } //define o status(se está resolvido ou não) para verdadeiro(resolvido)
       );
-      reply.code(200).send(update);
+      reply.code(200).send(update); //retorna o resultado da operação de update
     } catch (err) {
       reply.code(500).send({ error: err.message });
     }
   });
+  fastify.delete("/deletar", async function (req, reply) {
+
+  const db = this.mongo.client.db("projetoI");
+  const riscos = db.collection("riscos");
+  try {
+    const idRisco = req.body._id;
+    const id = new this.mongo.ObjectId(idRisco); //pega o id do documento
+    const result = await riscos.deleteOne({
+      _id: id,
+    });
+    reply.code(200).send({ result}); //se deletar, retorna sucesso
+  } catch (err) {
+    reply.code(500).send({ error: err.message }); //se der erro, retorna erro 500
+  }
+});
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*.....=##########*:...                               
                                               ...+++++***********++-..                              
