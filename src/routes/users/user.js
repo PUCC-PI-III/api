@@ -26,12 +26,17 @@ export default async function (fastify) {
       }
     })  
 
-  fastify.get('/users', async function () {
-      const db = this.mongo.client.db('projetoI'); 
+  fastify.post('/users', async function () {
+      const db = fastify.mongo.client.db('projetoI');
       const users = db.collection('users');
       try {
-        const allUsers = users.find({}).toArray();
-        return allUsers;
+        const { email, senha } = req.body;
+        const user = await users.findOne({ email: email, senha: senha });
+        if (user) {
+          return { message: 'Login successful', user: user };
+        } else {
+          return { error: 'Invalid email or password' };
+        }
       } catch (err) {
         return { error: err.message };
       }
@@ -47,7 +52,5 @@ export default async function (fastify) {
         return { error: err.message };
     } 
   })
-    
-    
 
 } 

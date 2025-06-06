@@ -1,16 +1,17 @@
 import fastifyMultipart from "@fastify/multipart";
 import fastify from "fastify";
 
-function getMonday(dateInput) { 
+function getMonday(dateInput) {
   let mondayWeek;
   if (dateInput) {
-    mondayWeek = new Date(dateInput); //cria um objeto Date com a data recebida 
+    mondayWeek = new Date(dateInput); //cria um objeto Date com a data recebida
   } else {
     mondayWeek = new Date(Date.now()); //cria um objeto Date com a data atual
   }
   let monday = mondayWeek.getDay(); //determina o dia da semana(0-6) da data recebida
   if (monday === 0) monday = 7; //se for domingo, define como 7 para facilitar o cálculo
-  if (monday !== 1) { //se não for segunda-feira
+  if (monday !== 1) {
+    //se não for segunda-feira
     mondayWeek.setHours(-24 * (monday - 1)); //subtrai o número de horas correspondente aos dias até a segunda-feira
   }
   let year = mondayWeek.getFullYear(); //pega o ano da data
@@ -104,7 +105,10 @@ export default async function (fastify) {
     const db = this.mongo.client.db("projetoI");
     const riscos = db.collection("riscos");
     try {
-      const allRiscos = riscos.find({},{
+      const allRiscos = riscos
+        .find(
+          {},
+          {
             projection: {
               _id: 1,
               tit: 1,
@@ -113,18 +117,24 @@ export default async function (fastify) {
               date: 1,
               status: 1,
               imagem: 1,
-            }}).toArray();
+            },
+          }
+        )
+        .toArray();
       return allRiscos;
     } catch (err) {
       return { error: err.message };
     }
   });
 
-    fastify.get("/riscosnoimage", async function (req, reply) {
+  fastify.get("/riscosnoimage", async function (req, reply) {
     const db = this.mongo.client.db("projetoI");
     const riscos = db.collection("riscos");
     try {
-      const allRiscos = riscos.find({},{
+      const allRiscos = riscos
+        .find(
+          {},
+          {
             projection: {
               _id: 1,
               tit: 1,
@@ -132,32 +142,17 @@ export default async function (fastify) {
               localizacao: 1,
               date: 1,
               status: 1,
-            }}).toArray();
+            },
+          }
+        )
+        .toArray();
       return allRiscos;
     } catch (err) {
       return { error: err.message };
     }
   });
-    
 
-  
-
-
-
-
-
-//Rotas referentes ao segundo aplicativo
-
-
-
-
-
-
-
-
-
-
-
+  //Rotas referentes ao segundo aplicativo
 
   fastify.get("/relatoriosemanal", async function (req, reply) {
     //retorna riscos registrados naquela semana
@@ -230,14 +225,15 @@ export default async function (fastify) {
         .toArray(); //busca todos os documentos e retorna o id, o titulo, observações, localização e data
       const semanas = [];
 
-      allRiscos.forEach((item) => { //para cada item
+      allRiscos.forEach((item) => {
+        //para cada item
         const monday = getMonday(item.date); //define a segunda da semana daquele dia
         const sunday = getSunday(item.date); //define o domingo da semana daquele dia
         const range = `${monday} - ${sunday}`; //determina que a semana vai da segunda até o domingo
 
         let semana = semanas.find((ordena) => ordena.week === range); //procura se já existe uma semana com o mesmo intervalo de datas
         if (!semana) {
-          semana = { week: range, riscos: [] }; //determina que o array 'semana'(que vai ser retornado pela rota) 
+          semana = { week: range, riscos: [] }; //determina que o array 'semana'(que vai ser retornado pela rota)
           // contém o elemento 'week'(que determina o 'range') e um array para armazenar os riscos
           semanas.push(semana); //armazena a semana no array 'semanas'
         }
@@ -251,7 +247,6 @@ export default async function (fastify) {
       }); //ordena as semanas pelo começo da semana e retorna o array de semanas ordenado
 
       reply.code(200).send(semanas); //retorna o array de semanas ordenado
-      
     } catch (err) {
       return { error: err.message };
     }
@@ -273,36 +268,21 @@ export default async function (fastify) {
     }
   });
   fastify.delete("/deletar", async function (req, reply) {
-  //so pra deletar os 800 risco de teste mais rapido
-  const db = this.mongo.client.db("projetoI");
-  const riscos = db.collection("riscos");
-  try {
-    const idRisco = req.body._id;
-    const id = new this.mongo.ObjectId(idRisco); //pega o id do documento
-    const result = await riscos.deleteOne({
-      _id: id,
-    });
-    reply.code(200).send({ result}); //se deletar, retorna sucesso
-  } catch (err) {
-    reply.code(500).send({ error: err.message }); //se der erro, retorna erro 500
-  }
-});
-
+    //so pra deletar os 800 risco de teste mais rapido
+    const db = this.mongo.client.db("projetoI");
+    const riscos = db.collection("riscos");
+    try {
+      const idRisco = req.body._id;
+      const id = new this.mongo.ObjectId(idRisco); //pega o id do documento
+      const result = await riscos.deleteOne({
+        _id: id,
+      });
+      reply.code(200).send({ result }); //se deletar, retorna sucesso
+    } catch (err) {
+      reply.code(500).send({ error: err.message }); //se der erro, retorna erro 500
+    }
+  });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
