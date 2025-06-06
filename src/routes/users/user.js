@@ -33,9 +33,9 @@ export default async function (fastify) {
         const { email, senha } = req.body;
         const user = await users.findOne({ email: email, senha: senha });
         if (user) {
-          return { message: 'Login successful', user: user };
+          return { message: 'Login efetuado com sucesso!', user: user };
         } else {
-          return { error: 'Invalid email or password' };
+          return { error: 'E-mail ou senha inválida.' };
         }
       } catch (err) {
         return { error: err.message };
