@@ -112,13 +112,33 @@ export default async function (fastify) {
               localizacao: 1,
               date: 1,
               status: 1,
-            
+              imagem: 1,
             }}).toArray();
       return allRiscos;
     } catch (err) {
       return { error: err.message };
     }
   });
+
+    fastify.get("/riscosnoimage", async function (req, reply) {
+    const db = this.mongo.client.db("projetoI");
+    const riscos = db.collection("riscos");
+    try {
+      const allRiscos = riscos.find({},{
+            projection: {
+              _id: 1,
+              tit: 1,
+              obs: 1,
+              localizacao: 1,
+              date: 1,
+              status: 1,
+            }}).toArray();
+      return allRiscos;
+    } catch (err) {
+      return { error: err.message };
+    }
+  });
+    
 
   
 
