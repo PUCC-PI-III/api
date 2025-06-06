@@ -26,7 +26,7 @@ export default async function (fastify) {
       }
     })  
 
-  fastify.post('/users', async function () {
+  fastify.post('/users', async function (req) {
       const db = fastify.mongo.client.db('projetoI');
       const users = db.collection('users');
       try {
