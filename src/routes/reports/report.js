@@ -253,7 +253,7 @@ export default async function (fastify) {
     }
   });
   fastify.delete("/deletar", async function (req, reply) {
-
+  //so pra deletar os 800 risco de teste mais rapido
   const db = this.mongo.client.db("projetoI");
   const riscos = db.collection("riscos");
   try {
