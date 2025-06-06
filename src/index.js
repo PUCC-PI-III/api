@@ -12,8 +12,11 @@ fastify.register(fastifyMongo, {
     forceClose: true,
     url: "mongodb+srv://api:senhaapi@robson.1kne10m.mongodb.net/?retryWrites=true&w=majority&appName=robson"
 })
+
 fastify.register(import("@fastify/cors"), {
-  origin: "*"
+  origin: "*",
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
 })
 fastify.register(users)
 fastify.register(reports)
